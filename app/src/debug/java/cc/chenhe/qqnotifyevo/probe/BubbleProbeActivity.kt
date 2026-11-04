@@ -195,7 +195,8 @@ class BubbleProbeActivity : ComponentActivity() {
         val requestCode = (System.currentTimeMillis() and 0x7fffffff).toInt()
         val openChat = PendingIntent.getActivity(
             this, requestCode, direct,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            // Bubble PendingIntents must be mutable so SystemUI can inject launch options.
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
         )
         val person = Person.Builder().setName(sourceLabel).build()
         val shortcutId = "bubble-probe-${info.packageName}"
