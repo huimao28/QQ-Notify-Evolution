@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Person
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
@@ -108,7 +109,7 @@ class BubbleProbeActivity : ComponentActivity() {
                     Text("系统气泡测试仅在 Android 11 及以上启用。")
                 } else if (target?.publiclyCallable == true) {
                     Button(
-                        onClick = { createDirectBubble(callback, target.info, state.sourceLabel ?: "QQ/TIM") },
+                        onClick = { createDirectBubble(callback, target.info!!, state.sourceLabel ?: "QQ/TIM") },
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text("创建直接气泡测试") }
                 } else {
@@ -190,7 +191,7 @@ class BubbleProbeActivity : ComponentActivity() {
         // Re-check immediately before creating an externally targeted PendingIntent.
         val check = resolveTarget(callback, info.packageName)
         if (!check.publiclyCallable) return
-        val direct = Intent(callback).setComponent(info.componentName)
+        val direct = Intent(callback).setComponent(ComponentName(info.packageName, info.name))
         val requestCode = (System.currentTimeMillis() and 0x7fffffff).toInt()
         val openChat = PendingIntent.getActivity(
             this, requestCode, direct,
@@ -214,7 +215,7 @@ class BubbleProbeActivity : ComponentActivity() {
             .setContentTitle("$sourceLabel 直接聊天气泡测试")
             .setContentText("仅由你手动创建；点气泡验证是否进入原会话")
             .setCategory(Notification.CATEGORY_MESSAGE)
-            .setPerson(person)
+            .addPerson(person)
             .setShortcutId(shortcutId)
             .setContentIntent(openChat)
             .setBubbleMetadata(bubble)
