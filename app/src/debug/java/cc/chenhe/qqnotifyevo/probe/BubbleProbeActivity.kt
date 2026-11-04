@@ -16,6 +16,7 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.content.LocusId
 import android.os.Looper
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -197,13 +198,18 @@ class BubbleProbeActivity : ComponentActivity() {
             this, requestCode, direct,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val person = Person.Builder().setName(sourceLabel).build()
+        val person = Person.Builder()
+            .setName(sourceLabel)
+            .setKey("bubble-probe-${info.packageName}")
+            .setImportant(true)
+            .build()
         val shortcutId = "bubble-probe-${info.packageName}"
         val shortcut = ShortcutInfo.Builder(this, shortcutId)
             .setShortLabel("$sourceLabel 直接聊天测试")
             .setLongLived(true)
             .setPerson(person)
             .setCategories(setOf("android.shortcut.conversation"))
+            .setLocusId(LocusId(shortcutId))
             .setIntent(direct)
             .build()
         getSystemService(ShortcutManager::class.java).pushDynamicShortcut(shortcut)
@@ -211,13 +217,17 @@ class BubbleProbeActivity : ComponentActivity() {
         // This keeps the QQ activity in the system bubble task instead of using a
         // cross-package PendingIntent bubble, which Android 17 rejects.
         val bubble = Notification.BubbleMetadata.Builder(shortcutId).build()
+        val style = Notification.MessagingStyle(person)
+            .addMessage("点气泡验证是否进入原会话", System.currentTimeMillis(), person)
         val notification = Notification.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_notify_qq)
             .setContentTitle("$sourceLabel 直接聊天气泡测试")
             .setContentText("仅由你手动创建；点气泡验证是否进入原会话")
             .setCategory(Notification.CATEGORY_MESSAGE)
+            .setStyle(style)
             .addPerson(person)
             .setShortcutId(shortcutId)
+            .setLocusId(LocusId(shortcutId))
             .setContentIntent(openChat)
             .setBubbleMetadata(bubble)
             .setAutoCancel(true)
