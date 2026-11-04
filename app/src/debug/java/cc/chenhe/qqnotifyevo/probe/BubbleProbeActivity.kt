@@ -195,8 +195,7 @@ class BubbleProbeActivity : ComponentActivity() {
         val requestCode = (System.currentTimeMillis() and 0x7fffffff).toInt()
         val openChat = PendingIntent.getActivity(
             this, requestCode, direct,
-            // Bubble PendingIntents must be mutable so SystemUI can inject launch options.
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val person = Person.Builder().setName(sourceLabel).build()
         val shortcutId = "bubble-probe-${info.packageName}"
@@ -204,13 +203,14 @@ class BubbleProbeActivity : ComponentActivity() {
             .setShortLabel("$sourceLabel 直接聊天测试")
             .setLongLived(true)
             .setPerson(person)
-            .setCategories(setOf("cc.chenhe.qqnotifyevo.BUBBLE_PROBE"))
+            .setCategories(setOf("android.shortcut.conversation"))
             .setIntent(direct)
             .build()
         getSystemService(ShortcutManager::class.java).pushDynamicShortcut(shortcut)
-        val bubble = Notification.BubbleMetadata.Builder(
-            openChat, Icon.createWithResource(this, R.mipmap.ic_launcher)
-        ).setDesiredHeight(640).build()
+        // Android 11+ conversation bubbles are keyed by the long-lived shortcut.
+        // This keeps the QQ activity in the system bubble task instead of using a
+        // cross-package PendingIntent bubble, which Android 17 rejects.
+        val bubble = Notification.BubbleMetadata.Builder(shortcutId).build()
         val notification = Notification.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_notify_qq)
             .setContentTitle("$sourceLabel 直接聊天气泡测试")
