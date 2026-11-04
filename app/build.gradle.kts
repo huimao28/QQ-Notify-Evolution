@@ -45,7 +45,13 @@ android {
         }
     }
     buildTypes {
+        debug {
+            applicationIdSuffix = ".bubbleprobe"
+            versionNameSuffix = "-bubble-probe"
+            buildConfigField("boolean", "BUBBLE_PROBE", "true")
+        }
         release {
+            buildConfigField("boolean", "BUBBLE_PROBE", "false")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")

@@ -11,7 +11,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.lifecycleScope
+import cc.chenhe.qqnotifyevo.BuildConfig
 import cc.chenhe.qqnotifyevo.core.InnerNotificationProcessor
+import cc.chenhe.qqnotifyevo.probe.BubbleProbeStore
 import cc.chenhe.qqnotifyevo.utils.Mode
 import cc.chenhe.qqnotifyevo.utils.PREFERENCE_MODE
 import cc.chenhe.qqnotifyevo.utils.Tag
@@ -56,6 +58,8 @@ class NotificationMonitorService : NotificationListenerService(),
         ctx = this
         Timber.tag(TAG).v("Service - onCreate")
         lifecycleRegistry = LifecycleRegistry(this).apply { currentState = Lifecycle.State.CREATED }
+        // The co-installable debug build is a passive probe: it never constructs or runs processors.
+        if (BuildConfig.BUBBLE_PROBE) return
         mode = runBlocking {
             Mode.fromValue(ctx.dataStore.data.first()[PREFERENCE_MODE])
         }
@@ -82,6 +86,7 @@ class NotificationMonitorService : NotificationListenerService(),
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        if (BuildConfig.BUBBLE_PROBE) return Service.START_STICKY
         if (mode != Mode.Legacy) {
             return Service.START_STICKY
         }
@@ -103,6 +108,11 @@ class NotificationMonitorService : NotificationListenerService(),
     private fun ping() = true
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (BuildConfig.BUBBLE_PROBE) {
+            // Capture only the opaque original PendingIntent. Never read text/extras and never cancel.
+            BubbleProbeStore.capture(sbn.packageName, sbn.notification.contentIntent)
+            return
+        }
         Timber.tag(TAG).v("Detect notification from ${sbn.packageName}.")
 
         if (mode != Mode.Legacy) {
@@ -117,7 +127,7 @@ class NotificationMonitorService : NotificationListenerService(),
         rankingMap: RankingMap?,
         reason: Int
     ) {
-        if (sbn == null || mode != Mode.Legacy) {
+        if (BuildConfig.BUBBLE_PROBE || sbn == null || mode != Mode.Legacy) {
             return
         }
         processor.onNotificationRemoved(sbn, reason)
