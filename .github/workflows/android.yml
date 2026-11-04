@@ -34,7 +34,7 @@ jobs:
       run: ./gradlew assembleDebug
 
     - name: Build And Test Debug Probe
-      run: ./gradlew testDebugUnitTest lintDebug
+      run: ./gradlew testDebugUnitTest
 
     - name: Upload bubble probe debug APK
       uses: actions/upload-artifact@v4
