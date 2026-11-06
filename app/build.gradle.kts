@@ -45,7 +45,13 @@ android {
         }
     }
     buildTypes {
+        debug {
+            applicationIdSuffix = ".bubbleprobe"
+            versionNameSuffix = "-bubble-probe"
+            buildConfigField("boolean", "BUBBLE_PROBE", "true")
+        }
         release {
+            buildConfigField("boolean", "BUBBLE_PROBE", "false")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
@@ -85,7 +91,8 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.concurrent:concurrent-futures-ktx:1.1.0") // support ListenableFuture
-    implementation("com.oasisfeng.nevo:sdk:2.0.0-rc01")
+    // The debug bubble probe disables Nevo entirely; keep the original SDK on release only.
+    releaseImplementation("com.oasisfeng.nevo:sdk:2.0.0-rc01")
     implementation("com.jakewharton.timber:timber:5.0.1")
 
     testImplementation("junit:junit:4.13.2")
