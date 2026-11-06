@@ -46,6 +46,7 @@ import cc.chenhe.qqnotifyevo.ui.theme.AppTheme
 /** Debug-only, user-driven diagnostic UI. It never persists or logs captured material. */
 class BubbleProbeActivity : ComponentActivity() {
     private val channelId = "bubble_direct_chat_probe"
+    private val bubbleDesiredHeightDp = 512
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,6 +114,7 @@ class BubbleProbeActivity : ComponentActivity() {
                         onClick = { createDirectBubble(callback, target.info!!, state.sourceLabel ?: "QQ/TIM") },
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text("创建直接气泡测试") }
+                    Text("气泡高度请求：${bubbleDesiredHeightDp}dp；系统可能按屏幕可用高度、分屏状态或厂商策略裁剪/覆盖。")
                 } else {
                     Text("目标不是探针包可公开调用的 Activity（须 exported、无权限且属于来源 QQ/TIM），不会尝试直接气泡。")
                     if (launcher != null) {
@@ -219,7 +221,11 @@ class BubbleProbeActivity : ComponentActivity() {
         // Android 11+ conversation bubbles are keyed by the long-lived shortcut.
         // This keeps the QQ activity in the system bubble task instead of using a
         // cross-package PendingIntent bubble, which Android 17 rejects.
-        val bubble = Notification.BubbleMetadata.Builder(shortcutId).build()
+        // desiredHeight is a dp hint, not a guarantee: SystemUI may clamp it to the
+        // available display area or replace it according to an OEM/multi-window policy.
+        val bubble = Notification.BubbleMetadata.Builder(shortcutId)
+            .setDesiredHeight(bubbleDesiredHeightDp)
+            .build()
         val style = Notification.MessagingStyle(person)
             .addMessage("点气泡验证是否进入原会话", System.currentTimeMillis(), person)
         val notification = Notification.Builder(this, channelId)
