@@ -198,9 +198,11 @@ class BubbleProbeActivity : ComponentActivity() {
             this, requestCode, direct,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+        val conversationIcon = Icon.createWithResource(this, R.mipmap.ic_launcher)
         val person = Person.Builder()
             .setName(sourceLabel)
             .setKey("bubble-probe-${info.packageName}")
+            .setIcon(conversationIcon)
             .setImportant(true)
             .build()
         val shortcutId = "bubble-probe-${info.packageName}"
@@ -208,6 +210,7 @@ class BubbleProbeActivity : ComponentActivity() {
             .setShortLabel("$sourceLabel 直接聊天测试")
             .setLongLived(true)
             .setPerson(person)
+            .setIcon(conversationIcon)
             .setCategories(setOf("android.shortcut.conversation"))
             .setLocusId(LocusId(shortcutId))
             .setIntent(direct)
